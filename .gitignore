@@ -387,7 +387,6 @@ __pycache__/
 # End of https://www.gitignore.io/api/vim,linux,cmake,windows,qtcreator,visualstudio
 
 *.code-workspace
-.vscode/*
 /target/
 **/*.rs.bk
 *.ppm
