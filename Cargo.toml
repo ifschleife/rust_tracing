@@ -1,0 +1,6 @@
+[package]
+name = "rust_tracing"
+version = "0.1.0"
+authors = ["Daniel Rahier <2395679+ifschleife@users.noreply.github.com>"]
+
+[dependencies]
