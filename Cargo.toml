@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Daniel Rahier <2395679+ifschleife@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = { git = "https://github.com/brendanzab/cgmath", version = "0.16.1" }
+image = "*"
+cgmath = "0.16.*"
