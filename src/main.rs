@@ -1,6 +1,5 @@
 extern crate cgmath;
 extern crate image;
-mod color;
 mod ray;
 
 use std::f32;
@@ -35,7 +34,7 @@ fn main() {
             let v = y as f32 / NY as f32;
             let ray = Ray::new(origin, lower_left_corner + u*horizontal + v*vertical);
             let color = color(ray);
-            
+
             let index = (y*NX*3 + x*3) as usize;
             buffer[index + 0] = (255.99 * color[0]) as u8;
             buffer[index + 1] = (255.99 * color[1]) as u8;
@@ -43,5 +42,5 @@ fn main() {
         }
     }
 
-    image::save_buffer("image.png", &buffer, NX, NY, image::RGB(8)).unwrap()
+    image::save_buffer("image.png", &buffer, NX, NY, image::RGB(8)).unwrap();
 }
