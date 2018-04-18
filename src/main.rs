@@ -39,13 +39,14 @@ fn color(r: Ray) -> Vector3<f32> {
 fn main() {
     const NX: u32 = 200;
     const NY: u32 = 100;
+    const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
     let lower_left_corner = vec3(-2.0, -1.0, -1.0);
     let horizontal = vec3(4.0, 0.0, 0.0);
     let vertical = vec3(0.0, 2.0, 0.0);
     let origin = vec3(0.0, 0.0, 0.0);
 
-    let mut buffer = vec![0; (NX * NY * 3) as usize];
+    let mut buffer = Vec::with_capacity(BUFFER_SIZE);
 
     for y in (0..NY).rev() {
         for x in 0..NX {
@@ -54,10 +55,9 @@ fn main() {
             let ray = Ray::new(origin, lower_left_corner + u*horizontal + v*vertical);
             let color = color(ray);
 
-            let index = (y*NX*3 + x*3) as usize;
-            buffer[index + 0] = (255.99 * color[0]) as u8;
-            buffer[index + 1] = (255.99 * color[1]) as u8;
-            buffer[index + 2] = (255.99 * color[2]) as u8;
+            buffer.push((255.99 * color[0]) as u8);
+            buffer.push((255.99 * color[1]) as u8);
+            buffer.push((255.99 * color[2]) as u8);
         }
     }
 
