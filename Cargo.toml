@@ -6,3 +6,4 @@ authors = ["Daniel Rahier <2395679+ifschleife@users.noreply.github.com>"]
 [dependencies]
 image = "*"
 cgmath = "0.16.*"
+rand = "0.4.*"
