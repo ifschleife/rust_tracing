@@ -17,7 +17,7 @@ impl Ray {
         }
     }
 
-    pub fn point_at_time(self, t: f32) -> Vector3<f32> {
+    pub fn point_at_time(&self, t: f32) -> Vector3<f32> {
         self.origin + t*self.direction
     }
 }

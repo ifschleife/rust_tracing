@@ -1,40 +1,24 @@
 extern crate cgmath;
 extern crate image;
+mod hitable;
 mod ray;
 
-use std::f32;
 use cgmath::*;
+use hitable::{Hitable, World};
 use ray::{Ray};
+use std::f32;
 
 
-fn hit_sphere(center: &Vector3<f32>, radius: f32, ray: &Ray) -> f32 {
-    let oc = ray.origin - center;
-    let a = ray.direction.dot(ray.direction);
-    let b = 2.0 * oc.dot(ray.direction);
-    let c = oc.dot(oc) - radius*radius;
-    let discriminant = b*b - 4.0*a*c;
-
-    if discriminant < 0.0 {
-        -1.0
-    }
-    else {
-        (-b - discriminant.sqrt()) / (2.0*a)
+fn color(ray: Ray, world: &World) -> Vector3<f32> {
+    match world.hit(&ray, 0.0, f32::MAX) {
+        Some(record) => return 0.5*vec3(record.normal.x+1.0, record.normal.y+1.0, record.normal.z+1.0),
+        None => {
+            let unit_direction = ray.direction.normalize();
+            let t = 0.5*(unit_direction.y+1.0);
+            return (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+        }
     }
 }
-
-fn color(r: Ray) -> Vector3<f32> {
-    let t = hit_sphere(&vec3(0.0, 0.0, -1.0), 0.5, &r);
-    if t > 0.0 {
-        let normal = (r.point_at_time(t) - vec3(0.0, 0.0, -1.0)).normalize();
-        return 0.5*(normal + vec3(1.0, 1.0, 1.0))
-    }
-
-    let direction = r.direction.normalize();
-    let t = 0.5*(direction.y + 1.0);
-
-    (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0)
-}
-
 
 fn main() {
     const NX: u32 = 200;
@@ -46,6 +30,10 @@ fn main() {
     let vertical = vec3(0.0, 2.0, 0.0);
     let origin = vec3(0.0, 0.0, 0.0);
 
+    let mut world = World{objects: Vec::new()};
+    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5});
+    world.objects.push(Hitable::Sphere{center: vec3(0.0, -100.5, -1.0), radius: 100.0});
+
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
 
     for y in (0..NY).rev() {
@@ -53,7 +41,7 @@ fn main() {
             let u = x as f32 / NX as f32;
             let v = y as f32 / NY as f32;
             let ray = Ray::new(origin, lower_left_corner + u*horizontal + v*vertical);
-            let color = color(ray);
+            let color = color(ray, &world);
 
             buffer.push((255.99 * color[0]) as u8);
             buffer.push((255.99 * color[1]) as u8);
