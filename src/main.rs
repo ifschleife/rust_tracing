@@ -28,15 +28,14 @@ impl VectorLength for Vector3<f32> {
 }
 
 fn random_in_unit_sphere() -> Vector3<f32> {
-    
     let mut rng = rand::thread_rng();
-    let mut p = vec3(10.0, 0.0, 0.0);
 
-    while p.squared_length() >= 1.0 {
-        p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - vec3(1.0, 1.0, 1.0);
+    loop {
+        let p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - vec3(1.0, 1.0, 1.0);
+        if p.squared_length() >= 1.0 {
+            return p;
+        }
     }
-
-    p
 }
 
 fn color(ray: &Ray, world: &World) -> Vector3<f32> {
