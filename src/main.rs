@@ -13,9 +13,38 @@ use hitable::{Hitable, World};
 use ray::{Ray};
 
 
+trait VectorLength {
+    fn length(&self) -> f32;
+    fn squared_length(&self) -> f32;
+}
+
+impl VectorLength for Vector3<f32> {
+    fn length(&self) -> f32 {
+        return self.squared_length().sqrt();
+    }
+    fn squared_length(&self) -> f32 {
+        return self.x*self.x + self.y*self.y + self.z*self.z;
+    }
+}
+
+fn random_in_unit_sphere() -> Vector3<f32> {
+    
+    let mut rng = rand::thread_rng();
+    let mut p = vec3(10.0, 0.0, 0.0);
+
+    while p.squared_length() >= 1.0 {
+        p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - vec3(1.0, 1.0, 1.0);
+    }
+
+    p
+}
+
 fn color(ray: &Ray, world: &World) -> Vector3<f32> {
-    match world.hit(&ray, 0.0, f32::MAX) {
-        Some(record) => return 0.5*vec3(record.normal.x+1.0, record.normal.y+1.0, record.normal.z+1.0),
+    match world.hit(&ray, 0.001, f32::MAX) {
+        Some(record) => {
+            let target = record.p + record.normal + random_in_unit_sphere();
+            return 0.5*color(&Ray::new(record.p, target-record.p), &world);
+        },
         None => {
             let unit_direction = ray.direction.normalize();
             let t = 0.5*(unit_direction.y+1.0);
@@ -50,6 +79,7 @@ fn main() {
                 col += color(&r, &world);
             }
             col /= NS as f32;
+            col = vec3(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
 
             buffer.push((255.99 * col[0]) as u8);
             buffer.push((255.99 * col[1]) as u8);
