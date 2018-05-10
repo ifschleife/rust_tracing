@@ -7,42 +7,28 @@ use std::f32;
 
 mod camera;
 mod hitable;
+mod material;
 mod ray;
 use camera::{Camera};
 use hitable::{Hitable, World};
+use material::{Material};
 use ray::{Ray};
 
 
-trait VectorLength {
-    fn length(&self) -> f32;
-    fn squared_length(&self) -> f32;
-}
-
-impl VectorLength for Vector3<f32> {
-    fn length(&self) -> f32 {
-        return self.squared_length().sqrt();
-    }
-    fn squared_length(&self) -> f32 {
-        return self.x*self.x + self.y*self.y + self.z*self.z;
-    }
-}
-
-fn random_in_unit_sphere() -> Vector3<f32> {
-    let mut rng = rand::thread_rng();
-
-    loop {
-        let p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - vec3(1.0, 1.0, 1.0);
-        if p.squared_length() >= 1.0 {
-            return p;
-        }
-    }
-}
-
-fn color(ray: &Ray, world: &World) -> Vector3<f32> {
+fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
     match world.hit(&ray, 0.001, f32::MAX) {
         Some(record) => {
-            let target = record.p + record.normal + random_in_unit_sphere();
-            return 0.5*color(&Ray::new(record.p, target-record.p), &world);
+            if depth < 50 {
+                match record.material.scatter(&ray, &record.p, &record.normal) {
+                    Some(scatter) => {
+                        return scatter.attenuation.mul_element_wise(color(&scatter.ray, &world, depth+1));
+                    },
+                    None => return vec3(0.0, 0.0, 0.0),
+                }
+            }
+            else {
+                return vec3(0.0, 0.0, 0.0);
+            }
         },
         None => {
             let unit_direction = ray.direction.normalize();
@@ -59,8 +45,10 @@ fn main() {
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
     let mut world = World{objects: Vec::new()};
-    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5});
-    world.objects.push(Hitable::Sphere{center: vec3(0.0, -100.5, -1.0), radius: 100.0});
+    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5, material: Material::Lambertian{albedo: vec3(0.8, 0.3, 0.3)}});
+    world.objects.push(Hitable::Sphere{center: vec3(0.0, -100.5, -1.0), radius: 100.0, material: Material::Lambertian{albedo: vec3(0.8, 0.8, 0.0)}});
+    world.objects.push(Hitable::Sphere{center: vec3(1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.6, 0.2), fuzz: 1.0}});
+    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.8, 0.8), fuzz: 0.3}});
 
     let camera = Camera::new();
     let mut rng = rand::thread_rng();
@@ -75,7 +63,7 @@ fn main() {
                 let v = (y as f32 + rng.gen_range(0.0, 1.0)) / NY as f32;
                 let r = camera.get_ray(u, v);
                 // let p = r.point_at_time(2.0);
-                col += color(&r, &world);
+                col += color(&r, &world, 0);
             }
             col /= NS as f32;
             col = vec3(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
