@@ -51,7 +51,7 @@ fn main() {
     world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Dielectric{refraction_index: 1.5}});
     world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: -0.45, material: Material::Dielectric{refraction_index: 1.5}});
 
-    let camera = Camera::new();
+    let camera = Camera::new(vec3(-2.0, 2.0, 1.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0), 20.0, (NX / NY) as f32);
     let mut rng = rand::thread_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
