@@ -45,10 +45,11 @@ fn main() {
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
     let mut world = World{objects: Vec::new()};
-    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5, material: Material::Lambertian{albedo: vec3(0.8, 0.3, 0.3)}});
+    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5, material: Material::Lambertian{albedo: vec3(0.1, 0.2, 0.5)}});
     world.objects.push(Hitable::Sphere{center: vec3(0.0, -100.5, -1.0), radius: 100.0, material: Material::Lambertian{albedo: vec3(0.8, 0.8, 0.0)}});
-    world.objects.push(Hitable::Sphere{center: vec3(1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.6, 0.2), fuzz: 1.0}});
-    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.8, 0.8), fuzz: 0.3}});
+    world.objects.push(Hitable::Sphere{center: vec3(1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.6, 0.2), fuzz: 0.2}});
+    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Dielectric{refraction_index: 1.5}});
+    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: -0.45, material: Material::Dielectric{refraction_index: 1.5}});
 
     let camera = Camera::new();
     let mut rng = rand::thread_rng();
