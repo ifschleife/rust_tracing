@@ -1,9 +1,10 @@
 extern crate rand;
 use cgmath::*;
 use rand::Rng;
+use std::f32;
 
 use ray::{Ray};
-use std::f32;
+use vector::{VectorLength};
 
 
 pub enum Material {
@@ -15,20 +16,6 @@ pub enum Material {
 pub struct ScatterRay {
     pub ray: Ray,
     pub attenuation: Vector3<f32>,
-}
-
-trait VectorLength {
-    fn length(&self) -> f32;
-    fn squared_length(&self) -> f32;
-}
-
-impl VectorLength for Vector3<f32> {
-    fn length(&self) -> f32 {
-        return self.squared_length().sqrt();
-    }
-    fn squared_length(&self) -> f32 {
-        return self.x*self.x + self.y*self.y + self.z*self.z;
-    }
 }
 
 fn random_in_unit_sphere() -> Vector3<f32> {

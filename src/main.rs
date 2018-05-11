@@ -9,10 +9,12 @@ mod camera;
 mod hitable;
 mod material;
 mod ray;
+mod vector;
 use camera::{Camera};
 use hitable::{Hitable, World};
 use material::{Material};
 use ray::{Ray};
+use vector::{VectorLength};
 
 
 fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
@@ -51,7 +53,11 @@ fn main() {
     world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Dielectric{refraction_index: 1.5}});
     world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: -0.45, material: Material::Dielectric{refraction_index: 1.5}});
 
-    let camera = Camera::new(vec3(-2.0, 2.0, 1.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0), 20.0, (NX / NY) as f32);
+    let look_from = vec3(3.0, 3.0, 2.0);
+    let look_at = vec3(0.0, 0.0, -1.0);
+    let dist_to_focus = (look_from-look_at).length();
+    let aperture = 2.0;
+    let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, (NX / NY) as f32, aperture, dist_to_focus);
     let mut rng = rand::thread_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
