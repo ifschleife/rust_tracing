@@ -40,24 +40,58 @@ fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
     }
 }
 
+fn random_scene() -> Vec<Hitable> {
+    let n = 500;
+    let mut objects = Vec::with_capacity(n);
+    objects.push(Hitable::Sphere{center: vec3(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3(0.5, 0.5, 0.5)}});
+
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rng.gen_range(0.0, 1.0);
+            let center = vec3(a as f32 + 0.9*rng.gen_range(0.0, 1.0), 0.2, b as f32 + 0.9*rng.gen_range(0.0, 1.0));
+            if (center-vec3(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    let albedo_x = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
+                    let albedo_y = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
+                    let albedo_z = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
+                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3(albedo_x, albedo_y, albedo_z)}});
+                }
+                else if choose_mat < 0.95 {
+                    let albedo_x = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
+                    let albedo_y = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
+                    let albedo_z = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
+                    let fuzziness = 0.5*rng.gen_range(0.0, 1.0);
+                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
+                }
+                else {
+                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Dielectric{refraction_index: 1.5}});
+                }
+            }
+        }
+    }
+
+    objects.push(Hitable::Sphere{center: vec3(0.0, 1.0, 0.0), radius: 1.0, material: Material::Dielectric{refraction_index: 1.5}});
+    objects.push(Hitable::Sphere{center: vec3(-4.0, 1.0, 0.0), radius: 1.0, material: Material::Lambertian{albedo: vec3(0.4, 0.2, 0.1)}});
+    objects.push(Hitable::Sphere{center: vec3(4.0, 1.0, 0.0), radius: 1.0, material: Material::Metal{albedo: vec3(0.7, 0.6, 0.5), fuzz: 0.0}});
+    return objects;
+}
+
 fn main() {
-    const NX: u32 = 200;
-    const NY: u32 = 100;
+    const NX: u32 = 1200;
+    const NY: u32 = 800;
     const NS: u32 = 100;
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
-    let mut world = World{objects: Vec::new()};
-    world.objects.push(Hitable::Sphere{center: vec3(0.0, 0.0, -1.0), radius: 0.5, material: Material::Lambertian{albedo: vec3(0.1, 0.2, 0.5)}});
-    world.objects.push(Hitable::Sphere{center: vec3(0.0, -100.5, -1.0), radius: 100.0, material: Material::Lambertian{albedo: vec3(0.8, 0.8, 0.0)}});
-    world.objects.push(Hitable::Sphere{center: vec3(1.0, 0.0, -1.0), radius: 0.5, material: Material::Metal{albedo: vec3(0.8, 0.6, 0.2), fuzz: 0.2}});
-    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: 0.5, material: Material::Dielectric{refraction_index: 1.5}});
-    world.objects.push(Hitable::Sphere{center: vec3(-1.0, 0.0, -1.0), radius: -0.45, material: Material::Dielectric{refraction_index: 1.5}});
+    let world = World{objects: random_scene()};
 
-    let look_from = vec3(3.0, 3.0, 2.0);
-    let look_at = vec3(0.0, 0.0, -1.0);
-    let dist_to_focus = (look_from-look_at).length();
-    let aperture = 2.0;
-    let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, (NX / NY) as f32, aperture, dist_to_focus);
+    let look_from = vec3(13.0, 2.0, 3.0);
+    let look_at = vec3(0.0, 0.0, 0.0);
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+    let aspect = NX as f32 / NY as f32;
+    let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
     let mut rng = rand::thread_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
@@ -69,7 +103,6 @@ fn main() {
                 let u = (x as f32 + rng.gen_range(0.0, 1.0)) / NX as f32;
                 let v = (y as f32 + rng.gen_range(0.0, 1.0)) / NY as f32;
                 let r = camera.get_ray(u, v);
-                // let p = r.point_at_time(2.0);
                 col += color(&r, &world, 0);
             }
             col /= NS as f32;
