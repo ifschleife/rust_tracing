@@ -42,11 +42,10 @@ impl Camera {
     }
 
     fn random_point_in_unit_disk() -> Vector3<f32> {
-        let mut rng = rand::thread_rng();
-        let mut p;
+        let mut rng = rand::weak_rng();
 
         loop {
-            p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), 0.0) - vec3(1.0, 1.0, 0.0);
+            let p = 2.0f32*vec3(rng.next_f32(), rng.next_f32(), 0.0) - vec3(1.0, 1.0, 0.0);
             if p.dot(p) < 1.0 {
                 return p;
             }

@@ -19,10 +19,10 @@ pub struct ScatterRay {
 }
 
 fn random_in_unit_sphere() -> Vector3<f32> {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::weak_rng();
 
     loop {
-        let p = 2.0f32*vec3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - vec3(1.0, 1.0, 1.0);
+        let p = 2.0f32*vec3(rng.next_f32(), rng.next_f32(), rng.next_f32()) - vec3(1.0, 1.0, 1.0);
         if p.squared_length() >= 1.0 {
             return p;
         }
@@ -73,8 +73,8 @@ impl Material {
             cosine = -ray_hit_normal_angle / ray_in.direction.length();
         }
 
-        let mut rng = rand::thread_rng();
-        let rand_value = rng.gen_range(0.0, 1.0);
+        let mut rng = rand::weak_rng();
+        let rand_value = rng.next_f32();
 
         match Material::refract(&ray_in.direction, &outward_normal, ni_over_nt) {
             Some(refracted) => {

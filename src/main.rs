@@ -45,24 +45,24 @@ fn random_scene() -> Vec<Hitable> {
     let mut objects = Vec::with_capacity(n);
     objects.push(Hitable::Sphere{center: vec3(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3(0.5, 0.5, 0.5)}});
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::weak_rng();//thread_rng();
 
     for a in -11..11 {
         for b in -11..11 {
-            let choose_mat = rng.gen_range(0.0, 1.0);
-            let center = vec3(a as f32 + 0.9*rng.gen_range(0.0, 1.0), 0.2, b as f32 + 0.9*rng.gen_range(0.0, 1.0));
+            let choose_mat = rng.next_f32();
+            let center = vec3(a as f32 + 0.9*rng.next_f32(), 0.2, b as f32 + 0.9*rng.next_f32());
             if (center-vec3(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let albedo_x = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
-                    let albedo_y = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
-                    let albedo_z = rng.gen_range(0.0, 1.0) * rng.gen_range(0.0, 1.0);
+                    let albedo_x = rng.next_f32() * rng.next_f32();
+                    let albedo_y = rng.next_f32() * rng.next_f32();
+                    let albedo_z = rng.next_f32() * rng.next_f32();
                     objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3(albedo_x, albedo_y, albedo_z)}});
                 }
                 else if choose_mat < 0.95 {
-                    let albedo_x = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
-                    let albedo_y = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
-                    let albedo_z = 0.5*(1.0 + rng.gen_range(0.0, 1.0));
-                    let fuzziness = 0.5*rng.gen_range(0.0, 1.0);
+                    let albedo_x = 0.5*(1.0 + rng.next_f32());
+                    let albedo_y = 0.5*(1.0 + rng.next_f32());
+                    let albedo_z = 0.5*(1.0 + rng.next_f32());
+                    let fuzziness = 0.5*rng.next_f32();
                     objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
                 }
                 else {
@@ -92,7 +92,7 @@ fn main() {
     let aperture = 0.1;
     let aspect = NX as f32 / NY as f32;
     let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::weak_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
 
@@ -100,8 +100,8 @@ fn main() {
         for x in 0..NX {
             let mut col = vec3(0.0, 0.0, 0.0);
             for _ in 0..NS {
-                let u = (x as f32 + rng.gen_range(0.0, 1.0)) / NX as f32;
-                let v = (y as f32 + rng.gen_range(0.0, 1.0)) / NY as f32;
+                let u = (x as f32 + rng.next_f32()) / NX as f32;
+                let v = (y as f32 + rng.next_f32()) / NY as f32;
                 let r = camera.get_ray(u, v);
                 col += color(&r, &world, 0);
             }
