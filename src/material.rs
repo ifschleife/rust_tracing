@@ -23,7 +23,7 @@ fn random_in_unit_sphere() -> Vector3<f32> {
 
     loop {
         let p = 2.0f32*vec3(rng.next_f32(), rng.next_f32(), rng.next_f32()) - vec3(1.0, 1.0, 1.0);
-        if p.squared_length() >= 1.0 {
+        if p.squared_length() < 1.0 {
             return p;
         }
     }
