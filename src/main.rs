@@ -126,5 +126,5 @@ fn main() {
         let milli = &milli[0..2];
         println!("{}.{} {}", elapsed.as_secs(), milli, COUNTER);
     }
-    image::save_buffer("image.png", &buffer, NX, NY, image::RGB(8)).unwrap();
+    image::save_buffer("output.png", &buffer, NX, NY, image::RGB(8)).unwrap();
 }
