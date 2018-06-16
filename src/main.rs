@@ -124,7 +124,7 @@ fn main() {
     unsafe {
         let milli = (elapsed.subsec_nanos() * 1_000_000_000).to_string();
         let milli = &milli[0..2];
-        println!("{}.{} {}", elapsed.as_secs(), milli, COUNTER);
+        println!("{}.{} seconds\n{} rays", elapsed.as_secs(), milli, COUNTER);
     }
     image::save_buffer("output.png", &buffer, NX, NY, image::RGB(8)).unwrap();
 }
