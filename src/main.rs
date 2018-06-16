@@ -114,5 +114,5 @@ fn main() {
         }
     }
 
-    image::save_buffer("image.png", &buffer, NX, NY, image::RGB(8)).unwrap();
+    image::save_buffer("output.png", &buffer, NX, NY, image::RGB(8)).unwrap();
 }
