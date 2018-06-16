@@ -4,6 +4,7 @@ extern crate rand;
 use cgmath::*;
 use rand::Rng;
 use std::f32;
+use std::time::SystemTime;
 
 mod camera;
 mod hitable;
@@ -16,8 +17,12 @@ use material::{Material};
 use ray::{Ray};
 use vector::{VectorLength};
 
+static mut COUNTER : u32 = 0;
 
 fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
+    unsafe {
+    COUNTER += 1;
+    }
     match world.hit(&ray, 0.001, f32::MAX) {
         Some(record) => {
             if depth < 50 {
@@ -95,6 +100,7 @@ fn main() {
     let mut rng = rand::weak_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
+    let start_time = SystemTime::now();
 
     for y in (0..NY).rev() {
         for x in 0..NX {
@@ -114,5 +120,11 @@ fn main() {
         }
     }
 
+    let elapsed = start_time.elapsed().expect("SystemTime elapsed time failed");
+    unsafe {
+        let milli = (elapsed.subsec_nanos() * 1_000_000_000).to_string();
+        let milli = &milli[0..2];
+        println!("{}.{} {}", elapsed.as_secs(), milli, COUNTER);
+    }
     image::save_buffer("image.png", &buffer, NX, NY, image::RGB(8)).unwrap();
 }
