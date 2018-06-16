@@ -81,7 +81,7 @@ fn random_scene() -> Vec<Hitable> {
 fn main() {
     const NX: u32 = 1200;
     const NY: u32 = 800;
-    const NS: u32 = 100;
+    const NS: u32 = 10;
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
     let world = World{objects: random_scene()};
