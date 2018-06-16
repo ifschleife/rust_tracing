@@ -84,8 +84,8 @@ fn random_scene() -> Vec<Hitable> {
 }
 
 fn main() {
-    const NX: u32 = 1200;
-    const NY: u32 = 800;
+    const NX: u32 = 600;
+    const NY: u32 = 400;
     const NS: u32 = 10;
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
