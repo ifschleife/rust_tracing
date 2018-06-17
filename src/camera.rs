@@ -35,15 +35,13 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, s: f32, t: f32) -> Ray {
-        let rd = self.lens_radius * Camera::random_point_in_unit_disk();
+    pub fn get_ray(&self, s: f32, t: f32, rng: &mut Rng) -> Ray {
+        let rd = self.lens_radius * Camera::random_point_in_unit_disk(rng);
         let offset = self.u*rd.x + self.v*rd.y;
         return Ray::new(self.origin + offset, self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin - offset);
     }
 
-    fn random_point_in_unit_disk() -> Vector3<f32> {
-        let mut rng = rand::weak_rng();
-
+    fn random_point_in_unit_disk(rng: &mut Rng) -> Vector3<f32> {
         loop {
             let p = 2.0f32*vec3(rng.next_f32(), rng.next_f32(), 0.0) - vec3(1.0, 1.0, 0.0);
             if p.dot(p) < 1.0 {

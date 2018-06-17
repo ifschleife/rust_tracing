@@ -18,9 +18,7 @@ pub struct ScatterRay {
     pub attenuation: Vector3<f32>,
 }
 
-fn random_in_unit_sphere() -> Vector3<f32> {
-    let mut rng = rand::weak_rng();
-
+fn random_in_unit_sphere(rng: &mut Rng) -> Vector3<f32> {
     loop {
         let p = 2.0f32*vec3(rng.next_f32(), rng.next_f32(), rng.next_f32()) - vec3(1.0, 1.0, 1.0);
         if p.squared_length() < 1.0 {
@@ -30,33 +28,33 @@ fn random_in_unit_sphere() -> Vector3<f32> {
 }
 
 impl Material {
-    pub fn scatter(&self, ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>) -> Option<ScatterRay> {
+    pub fn scatter(&self, ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, rng: &mut Rng) -> Option<ScatterRay> {
         match self {
-            &Material::Lambertian {albedo } => return Material::scatter_lambertian(&hit_point, &hit_normal, &albedo),
-            &Material::Metal { albedo, fuzz } => return Material::scatter_metal(&ray_in, &hit_point, &hit_normal, &albedo, fuzz),
-            &Material::Dielectric { refraction_index } => return Material::scatter_dielectric(&ray_in, &hit_point, &hit_normal, refraction_index),
+            &Material::Lambertian {albedo } => return Material::scatter_lambertian(&hit_point, &hit_normal, &albedo, rng),
+            &Material::Metal { albedo, fuzz } => return Material::scatter_metal(&ray_in, &hit_point, &hit_normal, &albedo, fuzz, rng),
+            &Material::Dielectric { refraction_index } => return Material::scatter_dielectric(&ray_in, &hit_point, &hit_normal, refraction_index, rng),
         }
     }
 
-    fn scatter_lambertian(hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, albedo: &Vector3<f32>) -> Option<ScatterRay> {
-        let target = hit_point + hit_normal + random_in_unit_sphere();
+    fn scatter_lambertian(hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, albedo: &Vector3<f32>, rng: &mut Rng) -> Option<ScatterRay> {
+        let target = hit_point + hit_normal + random_in_unit_sphere(rng);
         Some(ScatterRay{ray: Ray::new(*hit_point, target-hit_point), attenuation: *albedo })
     }
 
-    fn scatter_metal(ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, albedo: &Vector3<f32>, fuzz: f32) -> Option<ScatterRay> {
+    fn scatter_metal(ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, albedo: &Vector3<f32>, fuzz: f32, rng: &mut Rng) -> Option<ScatterRay> {
         let mut fuzziness = fuzz;
         if fuzz >= 1.0 {
             fuzziness = 1.0
         }
         let reflected = Material::reflect(&ray_in.direction.normalize(), &hit_normal);
-        let scattered = Ray::new(*hit_point, reflected + fuzziness*random_in_unit_sphere());
+        let scattered = Ray::new(*hit_point, reflected + fuzziness*random_in_unit_sphere(rng));
         if scattered.direction.dot(*hit_normal) > 0.0 {
             return Some(ScatterRay{ray: scattered, attenuation: *albedo});
         }
         None
     }
 
-    fn scatter_dielectric(ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, ref_idx: f32) -> Option<ScatterRay> {
+    fn scatter_dielectric(ray_in: &Ray, hit_point: &Vector3<f32>, hit_normal: &Vector3<f32>, ref_idx: f32, rng: &mut Rng) -> Option<ScatterRay> {
         let outward_normal;
         let ni_over_nt;
         let cosine;
@@ -73,13 +71,10 @@ impl Material {
             cosine = -ray_hit_normal_angle / ray_in.direction.length();
         }
 
-        let mut rng = rand::weak_rng();
-        let rand_value = rng.next_f32();
-
         match Material::refract(&ray_in.direction, &outward_normal, ni_over_nt) {
             Some(refracted) => {
                 let scattered;
-                if rand_value < Material::schlick(cosine, ref_idx) {
+                if rng.next_f32() < Material::schlick(cosine, ref_idx) {
                     scattered = Ray::new(*hit_point, Material::reflect(&ray_in.direction, &hit_normal));
                 }
                 else {

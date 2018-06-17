@@ -2,7 +2,7 @@ extern crate cgmath;
 extern crate image;
 extern crate rand;
 use cgmath::*;
-use rand::Rng;
+use rand::{Rng, SeedableRng, StdRng};
 use std::f32;
 use std::time::SystemTime;
 
@@ -19,16 +19,16 @@ use vector::{VectorLength};
 
 static mut COUNTER : u32 = 0;
 
-fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
+fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vector3<f32> {
     unsafe {
     COUNTER += 1;
     }
     match world.hit(&ray, 0.001, f32::MAX) {
         Some(record) => {
             if depth < 50 {
-                match record.material.scatter(&ray, &record.p, &record.normal) {
+                match record.material.scatter(&ray, &record.p, &record.normal, rng) {
                     Some(scatter) => {
-                        return scatter.attenuation.mul_element_wise(color(&scatter.ray, &world, depth+1));
+                        return scatter.attenuation.mul_element_wise(color(&scatter.ray, &world, depth+1, rng));
                     },
                     None => return vec3(0.0, 0.0, 0.0),
                 }
@@ -45,12 +45,10 @@ fn color(ray: &Ray, world: &World, depth: i32) -> Vector3<f32> {
     }
 }
 
-fn random_scene() -> Vec<Hitable> {
+fn random_scene(rng: &mut Rng) -> Vec<Hitable> {
     let n = 500;
     let mut objects = Vec::with_capacity(n);
     objects.push(Hitable::Sphere{center: vec3(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3(0.5, 0.5, 0.5)}});
-
-    let mut rng = rand::weak_rng();//thread_rng();
 
     for a in -11..11 {
         for b in -11..11 {
@@ -89,7 +87,10 @@ fn main() {
     const NS: u32 = 10;
     const BUFFER_SIZE: usize = (NX*NY*3) as usize;
 
-    let world = World{objects: random_scene()};
+    let seed: &[_] = &[1, 2, 3, 4];
+    let mut rng : StdRng =  SeedableRng::from_seed(seed);
+
+    let world = World{objects: random_scene(&mut rng)};
 
     let look_from = vec3(13.0, 2.0, 3.0);
     let look_at = vec3(0.0, 0.0, 0.0);
@@ -97,7 +98,6 @@ fn main() {
     let aperture = 0.1;
     let aspect = NX as f32 / NY as f32;
     let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
-    let mut rng = rand::weak_rng();
 
     let mut buffer = Vec::with_capacity(BUFFER_SIZE);
     let start_time = SystemTime::now();
@@ -108,8 +108,8 @@ fn main() {
             for _ in 0..NS {
                 let u = (x as f32 + rng.next_f32()) / NX as f32;
                 let v = (y as f32 + rng.next_f32()) / NY as f32;
-                let r = camera.get_ray(u, v);
-                col += color(&r, &world, 0);
+                let r = camera.get_ray(u, v, &mut rng);
+                col += color(&r, &world, 0, &mut rng);
             }
             col /= NS as f32;
             col = vec3(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
