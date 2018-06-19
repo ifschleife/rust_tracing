@@ -392,3 +392,5 @@ __pycache__/
 **/*.rs.bk
 *.ppm
 *.png
+cachegrind.out.*
+callgrind.out.*
