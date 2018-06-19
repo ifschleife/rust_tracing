@@ -15,6 +15,7 @@ use camera::{Camera};
 use hitable::{Hitable, World};
 use material::{Material};
 use ray::{Ray};
+use std::env;
 use vector::{VectorLength};
 
 static mut COUNTER : u32 = 0;
@@ -82,10 +83,14 @@ fn random_scene(rng: &mut Rng) -> Vec<Hitable> {
 }
 
 fn main() {
-    const NX: u32 = 600;
-    const NY: u32 = 400;
-    const NS: u32 = 10;
-    const BUFFER_SIZE: usize = (NX*NY*3) as usize;
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 3 {
+        println!("Please specify width and height of rendered image", );
+        return;
+    }
+    let width: u32 = args[1].parse().unwrap();
+    let height: u32 = args[2].parse().unwrap();
+    const SAMPLE_COUNT: u32 = 10;
 
     let seed: &[_] = &[1, 2, 3, 4];
     let mut rng : StdRng =  SeedableRng::from_seed(seed);
@@ -96,22 +101,23 @@ fn main() {
     let look_at = vec3(0.0, 0.0, 0.0);
     let dist_to_focus = 10.0;
     let aperture = 0.1;
-    let aspect = NX as f32 / NY as f32;
+    let aspect = width as f32 / height as f32;
     let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
 
-    let mut buffer = Vec::with_capacity(BUFFER_SIZE);
+    let buffer_size: usize = (width*height*3) as usize;
+    let mut buffer = Vec::with_capacity(buffer_size);
     let start_time = SystemTime::now();
 
-    for y in (0..NY).rev() {
-        for x in 0..NX {
+    for y in (0..height).rev() {
+        for x in 0..width {
             let mut col = vec3(0.0, 0.0, 0.0);
-            for _ in 0..NS {
-                let u = (x as f32 + rng.next_f32()) / NX as f32;
-                let v = (y as f32 + rng.next_f32()) / NY as f32;
+            for _ in 0..SAMPLE_COUNT {
+                let u = (x as f32 + rng.next_f32()) / width as f32;
+                let v = (y as f32 + rng.next_f32()) / height as f32;
                 let r = camera.get_ray(u, v, &mut rng);
                 col += color(&r, &world, 0, &mut rng);
             }
-            col /= NS as f32;
+            col /= SAMPLE_COUNT as f32;
             col = vec3(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
 
             buffer.push((255.99 * col[0]) as u8);
@@ -126,5 +132,5 @@ fn main() {
         let milli = &milli[0..2];
         println!("{}.{} seconds\n{} rays", elapsed.as_secs(), milli, COUNTER);
     }
-    image::save_buffer("output.png", &buffer, NX, NY, image::RGB(8)).unwrap();
+    image::save_buffer("output.png", &buffer, width, height, image::RGB(8)).unwrap();
 }
