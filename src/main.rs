@@ -8,8 +8,6 @@ mod camera;
 mod hitable;
 mod material;
 mod math;
-mod ray;
-mod vector;
 use camera::{Camera};
 use hitable::{Hitable, World};
 use material::{Material};
