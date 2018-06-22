@@ -1,7 +1,5 @@
-extern crate cgmath;
 extern crate image;
 extern crate rand;
-use cgmath::*;
 use rand::{Rng, SeedableRng, StdRng};
 use std::f32;
 use std::time::SystemTime;
@@ -9,18 +7,18 @@ use std::time::SystemTime;
 mod camera;
 mod hitable;
 mod material;
+mod math;
 mod ray;
 mod vector;
 use camera::{Camera};
 use hitable::{Hitable, World};
 use material::{Material};
-use ray::{Ray};
+use math::*;
 use std::env;
-use vector::{VectorLength};
 
 static mut COUNTER : u32 = 0;
 
-fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vector3<f32> {
+fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vec3f {
     unsafe {
     COUNTER += 1;
     }
@@ -29,19 +27,19 @@ fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vector3<f32> {
             if depth < 50 {
                 match record.material.scatter(&ray, &record.p, &record.normal, rng) {
                     Some(scatter) => {
-                        return scatter.attenuation.mul_element_wise(color(&scatter.ray, &world, depth+1, rng));
+                        return scatter.attenuation * color(&scatter.ray, &world, depth+1, rng);
                     },
-                    None => return vec3(0.0, 0.0, 0.0),
+                    None => return Vec3f::zero(),
                 }
             }
             else {
-                return vec3(0.0, 0.0, 0.0);
+                return Vec3f::zero();
             }
         },
         None => {
-            let unit_direction = ray.direction.normalize();
+            let unit_direction = normalize(&ray.direction);
             let t = 0.5*(unit_direction.y+1.0);
-            return (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+            return (1.0-t)*Vec3f::one() + t*Vec3f::new(0.5, 0.7, 1.0);
         }
     }
 }
@@ -49,25 +47,25 @@ fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vector3<f32> {
 fn random_scene(rng: &mut Rng) -> Vec<Hitable> {
     let n = 500;
     let mut objects = Vec::with_capacity(n);
-    objects.push(Hitable::Sphere{center: vec3(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3(0.5, 0.5, 0.5)}});
+    objects.push(Hitable::Sphere{center: vec3f(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3f(0.5, 0.5, 0.5)}});
 
     for a in -11..11 {
         for b in -11..11 {
             let choose_mat = rng.next_f32();
-            let center = vec3(a as f32 + 0.9*rng.next_f32(), 0.2, b as f32 + 0.9*rng.next_f32());
-            if (center-vec3(4.0, 0.2, 0.0)).length() > 0.9 {
+            let center = vec3f(a as f32 + 0.9*rng.next_f32(), 0.2, b as f32 + 0.9*rng.next_f32());
+            if (center-vec3f(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let albedo_x = rng.next_f32() * rng.next_f32();
                     let albedo_y = rng.next_f32() * rng.next_f32();
                     let albedo_z = rng.next_f32() * rng.next_f32();
-                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3(albedo_x, albedo_y, albedo_z)}});
+                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3f(albedo_x, albedo_y, albedo_z)}});
                 }
                 else if choose_mat < 0.95 {
                     let albedo_x = 0.5*(1.0 + rng.next_f32());
                     let albedo_y = 0.5*(1.0 + rng.next_f32());
                     let albedo_z = 0.5*(1.0 + rng.next_f32());
                     let fuzziness = 0.5*rng.next_f32();
-                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
+                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3f(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
                 }
                 else {
                     objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Dielectric{refraction_index: 1.5}});
@@ -76,9 +74,9 @@ fn random_scene(rng: &mut Rng) -> Vec<Hitable> {
         }
     }
 
-    objects.push(Hitable::Sphere{center: vec3(0.0, 1.0, 0.0), radius: 1.0, material: Material::Dielectric{refraction_index: 1.5}});
-    objects.push(Hitable::Sphere{center: vec3(-4.0, 1.0, 0.0), radius: 1.0, material: Material::Lambertian{albedo: vec3(0.4, 0.2, 0.1)}});
-    objects.push(Hitable::Sphere{center: vec3(4.0, 1.0, 0.0), radius: 1.0, material: Material::Metal{albedo: vec3(0.7, 0.6, 0.5), fuzz: 0.0}});
+    objects.push(Hitable::Sphere{center: vec3f(0.0, 1.0, 0.0), radius: 1.0, material: Material::Dielectric{refraction_index: 1.5}});
+    objects.push(Hitable::Sphere{center: vec3f(-4.0, 1.0, 0.0), radius: 1.0, material: Material::Lambertian{albedo: vec3f(0.4, 0.2, 0.1)}});
+    objects.push(Hitable::Sphere{center: vec3f(4.0, 1.0, 0.0), radius: 1.0, material: Material::Metal{albedo: vec3f(0.7, 0.6, 0.5), fuzz: 0.0}});
     return objects;
 }
 
@@ -97,12 +95,12 @@ fn main() {
 
     let world = World{objects: random_scene(&mut rng)};
 
-    let look_from = vec3(13.0, 2.0, 3.0);
-    let look_at = vec3(0.0, 0.0, 0.0);
+    let look_from = vec3f(13.0, 2.0, 3.0);
+    let look_at = Vec3f::zero();
     let dist_to_focus = 10.0;
     let aperture = 0.1;
     let aspect = width as f32 / height as f32;
-    let camera = Camera::new(look_from, look_at, vec3(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
+    let camera = Camera::new(&look_from, &look_at, &vec3f(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
 
     let buffer_size: usize = (width*height*3) as usize;
     let mut buffer = Vec::with_capacity(buffer_size);
@@ -110,7 +108,7 @@ fn main() {
 
     for y in (0..height).rev() {
         for x in 0..width {
-            let mut col = vec3(0.0, 0.0, 0.0);
+            let mut col = Vec3f::zero();
             for _ in 0..SAMPLE_COUNT {
                 let u = (x as f32 + rng.next_f32()) / width as f32;
                 let v = (y as f32 + rng.next_f32()) / height as f32;
@@ -118,11 +116,11 @@ fn main() {
                 col += color(&r, &world, 0, &mut rng);
             }
             col /= SAMPLE_COUNT as f32;
-            col = vec3(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
+            col = vec3f(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
 
-            buffer.push((255.99 * col[0]) as u8);
-            buffer.push((255.99 * col[1]) as u8);
-            buffer.push((255.99 * col[2]) as u8);
+            buffer.push((255.99 * col.x) as u8);
+            buffer.push((255.99 * col.y) as u8);
+            buffer.push((255.99 * col.z) as u8);
         }
     }
 
