@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceRoot}/target/debug/rust_tracing",
-            "args": [],
+            "args": ["600", "400"],
             "cwd": "${workspaceRoot}",
         },
     ]
