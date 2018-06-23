@@ -1,5 +1,4 @@
-extern crate rand;
-use rand::Rng;
+use rand::prelude::*;
 use std::f32;
 
 use math::*;
@@ -34,15 +33,15 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, s: f32, t: f32, rng: &mut Rng) -> Ray {
+    pub fn get_ray(&self, s: f32, t: f32, rng: &mut SmallRng) -> Ray {
         let rd = self.lens_radius * Camera::random_point_in_unit_disk(rng);
         let offset = self.u*rd.x + self.v*rd.y;
         return Ray::new(self.origin + offset, self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin - offset);
     }
 
-    fn random_point_in_unit_disk(rng: &mut Rng) -> Vec3f {
+    fn random_point_in_unit_disk(rng: &mut SmallRng) -> Vec3f {
         loop {
-            let p = 2.0f32*vec3f(rng.next_f32(), rng.next_f32(), 0.0) - vec3f(1.0, 1.0, 0.0);
+            let p = 2.0f32*vec3f(rng.gen::<f32>(), rng.gen::<f32>(), 0.0) - vec3f(1.0, 1.0, 0.0);
             if dot(p, p) < 1.0 {
                 return p;
             }

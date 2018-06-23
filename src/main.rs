@@ -1,6 +1,7 @@
 extern crate image;
 extern crate rand;
-use rand::{Rng, SeedableRng, StdRng};
+use rand::prelude::*;
+use std::env;
 use std::f32;
 use std::time::SystemTime;
 
@@ -12,11 +13,10 @@ use camera::{Camera};
 use hitable::{Hitable, World};
 use material::{Material};
 use math::*;
-use std::env;
 
 static mut COUNTER : u32 = 0;
 
-fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vec3f {
+fn color(ray: &Ray, world: &World, depth: i32, rng: &mut SmallRng) -> Vec3f {
     unsafe {
     COUNTER += 1;
     }
@@ -42,27 +42,27 @@ fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vec3f {
     }
 }
 
-fn random_scene(rng: &mut Rng) -> Vec<Hitable> {
+fn random_scene(rng: &mut SmallRng) -> Vec<Hitable> {
     let n = 500;
     let mut objects = Vec::with_capacity(n);
     objects.push(Hitable::Sphere{center: vec3f(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3f(0.5, 0.5, 0.5)}});
 
     for a in -11..11 {
         for b in -11..11 {
-            let choose_mat = rng.next_f32();
-            let center = vec3f(a as f32 + 0.9*rng.next_f32(), 0.2, b as f32 + 0.9*rng.next_f32());
+            let choose_mat = rng.gen::<f32>();
+            let center = vec3f(a as f32 + 0.9*rng.gen::<f32>(), 0.2, b as f32 + 0.9*rng.gen::<f32>());
             if (center-vec3f(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
-                    let albedo_x = rng.next_f32() * rng.next_f32();
-                    let albedo_y = rng.next_f32() * rng.next_f32();
-                    let albedo_z = rng.next_f32() * rng.next_f32();
+                    let albedo_x = rng.gen::<f32>() * rng.gen::<f32>();
+                    let albedo_y = rng.gen::<f32>() * rng.gen::<f32>();
+                    let albedo_z = rng.gen::<f32>() * rng.gen::<f32>();
                     objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3f(albedo_x, albedo_y, albedo_z)}});
                 }
                 else if choose_mat < 0.95 {
-                    let albedo_x = 0.5*(1.0 + rng.next_f32());
-                    let albedo_y = 0.5*(1.0 + rng.next_f32());
-                    let albedo_z = 0.5*(1.0 + rng.next_f32());
-                    let fuzziness = 0.5*rng.next_f32();
+                    let albedo_x = 0.5*(1.0 + rng.gen::<f32>());
+                    let albedo_y = 0.5*(1.0 + rng.gen::<f32>());
+                    let albedo_z = 0.5*(1.0 + rng.gen::<f32>());
+                    let fuzziness = 0.5*rng.gen::<f32>();
                     objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3f(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
                 }
                 else {
@@ -88,8 +88,8 @@ fn main() {
     let height: u32 = args[2].parse().unwrap();
     const SAMPLE_COUNT: u32 = 10;
 
-    let seed: &[_] = &[1, 2, 3, 4];
-    let mut rng : StdRng =  SeedableRng::from_seed(seed);
+    let seed: [u8; 16] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+    let mut rng = SmallRng::from_seed(seed);
 
     let world = World{objects: random_scene(&mut rng)};
 
@@ -108,8 +108,8 @@ fn main() {
         for x in 0..width {
             let mut col = Vec3f::zero();
             for _ in 0..SAMPLE_COUNT {
-                let u = (x as f32 + rng.next_f32()) / width as f32;
-                let v = (y as f32 + rng.next_f32()) / height as f32;
+                let u = (x as f32 + rng.gen::<f32>()) / width as f32;
+                let v = (y as f32 + rng.gen::<f32>()) / height as f32;
                 let r = camera.get_ray(u, v, &mut rng);
                 col += color(&r, &world, 0, &mut rng);
             }

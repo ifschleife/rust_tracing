@@ -1,6 +1,4 @@
-extern crate rand;
-use rand::Rng;
-use std::f32;
+use rand::prelude::*;
 
 use math::*;
 
@@ -16,9 +14,9 @@ pub struct ScatterRay {
     pub attenuation: Vec3f,
 }
 
-fn random_in_unit_sphere(rng: &mut Rng) -> Vec3f {
+fn random_in_unit_sphere(rng: &mut SmallRng) -> Vec3f {
     loop {
-        let p = 2.0f32*vec3f(rng.next_f32(), rng.next_f32(), rng.next_f32()) - Vec3f::one();
+        let p = 2.0f32*vec3f(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>()) - Vec3f::one();
         if p.length_squared() < 1.0 {
             return p;
         }
@@ -26,7 +24,7 @@ fn random_in_unit_sphere(rng: &mut Rng) -> Vec3f {
 }
 
 impl Material {
-    pub fn scatter(&self, ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, rng: &mut Rng) -> Option<ScatterRay> {
+    pub fn scatter(&self, ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, rng: &mut SmallRng) -> Option<ScatterRay> {
         match self {
             &Material::Lambertian {albedo } => return Material::scatter_lambertian(hit_point, hit_normal, albedo, rng),
             &Material::Metal { albedo, fuzz } => return Material::scatter_metal(&ray_in, hit_point, hit_normal, albedo, fuzz, rng),
@@ -34,12 +32,12 @@ impl Material {
         }
     }
 
-    fn scatter_lambertian(hit_point: Vec3f, hit_normal: Vec3f, albedo: Vec3f, rng: &mut Rng) -> Option<ScatterRay> {
+    fn scatter_lambertian(hit_point: Vec3f, hit_normal: Vec3f, albedo: Vec3f, rng: &mut SmallRng) -> Option<ScatterRay> {
         let target = hit_point + hit_normal + random_in_unit_sphere(rng);
         Some(ScatterRay{ray: Ray::new(hit_point, target - hit_point), attenuation: albedo })
     }
 
-    fn scatter_metal(ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, albedo: Vec3f, fuzz: f32, rng: &mut Rng) -> Option<ScatterRay> {
+    fn scatter_metal(ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, albedo: Vec3f, fuzz: f32, rng: &mut SmallRng) -> Option<ScatterRay> {
         let mut fuzziness = fuzz;
         if fuzz >= 1.0 {
             fuzziness = 1.0
@@ -52,7 +50,7 @@ impl Material {
         None
     }
 
-    fn scatter_dielectric(ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, ref_idx: f32, rng: &mut Rng) -> Option<ScatterRay> {
+    fn scatter_dielectric(ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, ref_idx: f32, rng: &mut SmallRng) -> Option<ScatterRay> {
         let outward_normal;
         let ni_over_nt;
         let cosine;
@@ -72,7 +70,7 @@ impl Material {
         match Material::refract(ray_in.direction, outward_normal, ni_over_nt) {
             Some(refracted) => {
                 let scattered;
-                if rng.next_f32() < Material::schlick(cosine, ref_idx) {
+                if rng.gen::<f32>() < Material::schlick(cosine, ref_idx) {
                     scattered = Ray::new(hit_point, Material::reflect(ray_in.direction, hit_normal));
                 }
                 else {
