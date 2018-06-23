@@ -5,7 +5,7 @@ pub fn vec3f(x: f32, y: f32, z: f32) -> Vec3f {
     Vec3f::new(x, y, z)
 }
 
-pub fn cross(vec1: &Vec3f, vec2: &Vec3f) -> Vec3f {
+pub fn cross(vec1: Vec3f, vec2: Vec3f) -> Vec3f {
     Vec3f {
         x: (vec1.y * vec2.z) - (vec1.z * vec2.y),
         y: (vec1.z * vec2.x) - (vec1.x * vec2.z),
@@ -13,11 +13,11 @@ pub fn cross(vec1: &Vec3f, vec2: &Vec3f) -> Vec3f {
     }
 }
 
-pub fn dot(vec1: &Vec3f, vec2: &Vec3f) -> f32 {
+pub fn dot(vec1: Vec3f, vec2: Vec3f) -> f32 {
     (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
 }
 
-pub fn normalize(vec: &Vec3f) -> Vec3f {
+pub fn normalize(vec: Vec3f) -> Vec3f {
     let length = vec.length();
     vec3f(vec.x / length, vec.y / length, vec.z / length)
 }
@@ -50,11 +50,11 @@ impl Vec3f {
         Vec3f { x, y, z }
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(self) -> f32 {
         return self.length_squared().sqrt();
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(self) -> f32 {
         return self.x*self.x + self.y*self.y + self.z*self.z;
     }
 

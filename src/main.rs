@@ -23,7 +23,7 @@ fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vec3f {
     match world.hit(&ray, 0.001, f32::MAX) {
         Some(record) => {
             if depth < 50 {
-                match record.material.scatter(&ray, &record.p, &record.normal, rng) {
+                match record.material.scatter(&ray, record.p, record.normal, rng) {
                     Some(scatter) => {
                         return scatter.attenuation * color(&scatter.ray, &world, depth+1, rng);
                     },
@@ -35,7 +35,7 @@ fn color(ray: &Ray, world: &World, depth: i32, rng: &mut Rng) -> Vec3f {
             }
         },
         None => {
-            let unit_direction = normalize(&ray.direction);
+            let unit_direction = normalize(ray.direction);
             let t = 0.5*(unit_direction.y+1.0);
             return (1.0-t)*Vec3f::one() + t*Vec3f::new(0.5, 0.7, 1.0);
         }
@@ -98,7 +98,7 @@ fn main() {
     let dist_to_focus = 10.0;
     let aperture = 0.1;
     let aspect = width as f32 / height as f32;
-    let camera = Camera::new(&look_from, &look_at, &vec3f(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
+    let camera = Camera::new(look_from, look_at, vec3f(0.0, 1.0, 0.0), 20.0, aspect, aperture, dist_to_focus);
 
     let buffer_size: usize = (width*height*3) as usize;
     let mut buffer = Vec::with_capacity(buffer_size);

@@ -16,16 +16,16 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(look_from: &Vec3f, look_at: &Vec3f, vup: &Vec3f, vert_fov: f32, aspect: f32, aperture: f32, focus_dist: f32) -> Camera {
+    pub fn new(look_from: Vec3f, look_at: Vec3f, vup: Vec3f, vert_fov: f32, aspect: f32, aperture: f32, focus_dist: f32) -> Camera {
         let theta = vert_fov * f32::consts::PI / 180.0;
         let half_height = (theta/2.0).tan();
         let half_width = aspect * half_height;
-        let w = normalize(&(*look_from - *look_at));
-        let u = normalize(&cross(&vup, &w));
-        let v = cross(&w, &u);
+        let w = normalize(look_from - look_at);
+        let u = normalize(cross(vup, w));
+        let v = cross(w, u);
         Camera {
-            origin: *look_from,
-            lower_left_corner: *look_from - half_width*focus_dist*u - half_height*focus_dist*v - focus_dist*w,
+            origin: look_from,
+            lower_left_corner: look_from - half_width*focus_dist*u - half_height*focus_dist*v - focus_dist*w,
             horizontal: 2.0*half_width*focus_dist*u,
             vertical: 2.0*half_height*focus_dist*v,
             u: u,
@@ -43,7 +43,7 @@ impl Camera {
     fn random_point_in_unit_disk(rng: &mut Rng) -> Vec3f {
         loop {
             let p = 2.0f32*vec3f(rng.next_f32(), rng.next_f32(), 0.0) - vec3f(1.0, 1.0, 0.0);
-            if dot(&p, &p) < 1.0 {
+            if dot(p, p) < 1.0 {
                 return p;
             }
         }

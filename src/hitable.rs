@@ -17,30 +17,30 @@ pub enum Hitable {
 impl Hitable {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         match self {
-            &Hitable::Sphere { ref center, radius, ref material } => {
-                return Hitable::hit_sphere(&center, radius, &material, ray, t_min, t_max);
+            &Hitable::Sphere { center, radius, ref material } => {
+                return Hitable::hit_sphere(center, radius, &material, ray, t_min, t_max);
             },
             // &Hitable::Cube { .. } => (),
         }
     }
 
-    fn hit_sphere<'a>(center: &Vec3f, radius: f32, material: &'a Material, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord<'a>> {
-        let oc = ray.origin - (*center);
-        let a = dot(&ray.direction, &ray.direction);
-        let b = dot(&oc, &ray.direction);
-        let c = dot(&oc, &oc) - radius * radius;
+    fn hit_sphere<'a>(center: Vec3f, radius: f32, material: &'a Material, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord<'a>> {
+        let oc = ray.origin - center;
+        let a = dot(ray.direction, ray.direction);
+        let b = dot(oc, ray.direction);
+        let c = dot(oc, oc) - radius * radius;
         let discriminant = (b * b) - (a * c);
         if discriminant > 0.0 {
             let temp = (-b - (b*b - a*c).sqrt()) / a;
             if temp < t_max && temp > t_min {
                 let point = ray.point_at_time(temp);
-                let normal = (point - *center) / radius;
+                let normal = (point - center) / radius;
                 return Some(HitRecord{t : temp, p: point, normal: normal, material: &material});
             }
             let temp = (-b + (b*b - a*c).sqrt()) / a;
             if temp < t_max && temp > t_min {
                 let point = ray.point_at_time(temp);
-                let normal = (point - *center) / radius;
+                let normal = (point - center) / radius;
                 return Some(HitRecord{t: temp, p: point, normal: normal, material: &material});
             }
         }
