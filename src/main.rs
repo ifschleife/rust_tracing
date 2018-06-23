@@ -124,9 +124,7 @@ fn main() {
 
     let elapsed = start_time.elapsed().expect("SystemTime elapsed time failed");
     unsafe {
-        let milli = (elapsed.subsec_nanos() * 1_000_000_000).to_string();
-        let milli = &milli[0..2];
-        println!("{}.{} seconds\n{} rays", elapsed.as_secs(), milli, COUNTER);
+        println!("{}.{} seconds\n{} rays", elapsed.as_secs(), elapsed.subsec_millis(), COUNTER);
     }
     image::save_buffer("output.png", &buffer, width, height, image::RGB(8)).unwrap();
 }
