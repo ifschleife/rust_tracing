@@ -6,3 +6,6 @@ authors = ["Daniel Rahier <2395679+ifschleife@users.noreply.github.com>"]
 [dependencies]
 image = "*"
 rand = "*"
+
+[profile.release]
+debug = true
