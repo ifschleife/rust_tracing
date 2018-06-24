@@ -9,74 +9,12 @@ mod camera;
 mod hitable;
 mod material;
 mod math;
+mod scene;
+
 use camera::{Camera};
-use hitable::{Hitable, World};
-use material::{Material};
 use math::*;
+use scene::{Scene};
 
-static mut COUNTER : u32 = 0;
-
-fn color(ray: &Ray, world: &World, depth: i32, rng: &mut SmallRng) -> Vec3f {
-    unsafe {
-    COUNTER += 1;
-    }
-    match world.hit(&ray, 0.001, f32::MAX) {
-        Some(record) => {
-            if depth < 50 {
-                match record.material.scatter(&ray, record.p, record.normal, rng) {
-                    Some(scatter) => {
-                        return scatter.attenuation * color(&scatter.ray, &world, depth+1, rng);
-                    },
-                    None => return Vec3f::zero(),
-                }
-            }
-            else {
-                return Vec3f::zero();
-            }
-        },
-        None => {
-            let unit_direction = normalize(ray.direction);
-            let t = 0.5*(unit_direction.y+1.0);
-            return (1.0-t)*Vec3f::one() + t*Vec3f::new(0.5, 0.7, 1.0);
-        }
-    }
-}
-
-fn random_scene(rng: &mut SmallRng) -> Vec<Hitable> {
-    let n = 500;
-    let mut objects = Vec::with_capacity(n);
-    objects.push(Hitable::Sphere{center: vec3f(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3f(0.5, 0.5, 0.5)}});
-
-    for a in -11..11 {
-        for b in -11..11 {
-            let choose_mat = rng.gen::<f32>();
-            let center = vec3f(a as f32 + 0.9*rng.gen::<f32>(), 0.2, b as f32 + 0.9*rng.gen::<f32>());
-            if (center-vec3f(4.0, 0.2, 0.0)).length() > 0.9 {
-                if choose_mat < 0.8 {
-                    let albedo_x = rng.gen::<f32>() * rng.gen::<f32>();
-                    let albedo_y = rng.gen::<f32>() * rng.gen::<f32>();
-                    let albedo_z = rng.gen::<f32>() * rng.gen::<f32>();
-                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Lambertian{albedo: vec3f(albedo_x, albedo_y, albedo_z)}});
-                }
-                else if choose_mat < 0.95 {
-                    let albedo_x = 0.5*(1.0 + rng.gen::<f32>());
-                    let albedo_y = 0.5*(1.0 + rng.gen::<f32>());
-                    let albedo_z = 0.5*(1.0 + rng.gen::<f32>());
-                    let fuzziness = 0.5*rng.gen::<f32>();
-                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Metal{albedo: vec3f(albedo_x, albedo_y, albedo_z), fuzz: fuzziness}});
-                }
-                else {
-                    objects.push(Hitable::Sphere{center: center, radius: 0.2, material: Material::Dielectric{refraction_index: 1.5}});
-                }
-            }
-        }
-    }
-
-    objects.push(Hitable::Sphere{center: vec3f(0.0, 1.0, 0.0), radius: 1.0, material: Material::Dielectric{refraction_index: 1.5}});
-    objects.push(Hitable::Sphere{center: vec3f(-4.0, 1.0, 0.0), radius: 1.0, material: Material::Lambertian{albedo: vec3f(0.4, 0.2, 0.1)}});
-    objects.push(Hitable::Sphere{center: vec3f(4.0, 1.0, 0.0), radius: 1.0, material: Material::Metal{albedo: vec3f(0.7, 0.6, 0.5), fuzz: 0.0}});
-    return objects;
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -91,7 +29,7 @@ fn main() {
     let seed: [u8; 16] = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
     let mut rng = SmallRng::from_seed(seed);
 
-    let world = World{objects: random_scene(&mut rng)};
+    let mut scene = Scene::generate(&mut rng);
 
     let look_from = vec3f(13.0, 2.0, 3.0);
     let look_at = Vec3f::zero();
@@ -111,7 +49,7 @@ fn main() {
                 let u = (x as f32 + rng.gen::<f32>()) / width as f32;
                 let v = (y as f32 + rng.gen::<f32>()) / height as f32;
                 let r = camera.get_ray(u, v, &mut rng);
-                col += color(&r, &world, 0, &mut rng);
+                col += scene.ray_trace(&r, 0, &mut rng);
             }
             col /= SAMPLE_COUNT as f32;
             col = vec3f(col.x.sqrt(), col.y.sqrt(), col.z.sqrt());
@@ -123,8 +61,7 @@ fn main() {
     }
 
     let elapsed = start_time.elapsed().expect("SystemTime elapsed time failed");
-    unsafe {
-        println!("{}.{} seconds\n{} rays", elapsed.as_secs(), elapsed.subsec_millis(), COUNTER);
-    }
+    println!("{}.{} seconds\n{} rays", elapsed.as_secs(), elapsed.subsec_millis(), scene.ray_count);
+
     image::save_buffer("output.png", &buffer, width, height, image::RGB(8)).unwrap();
 }
