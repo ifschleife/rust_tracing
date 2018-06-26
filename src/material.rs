@@ -3,6 +3,7 @@ use rand::prelude::*;
 use math::*;
 
 
+#[derive(Clone, Copy)]
 pub enum Material {
     Lambertian { albedo: Vec3f },
     Metal { albedo: Vec3f, fuzz: f32 },
@@ -24,6 +25,7 @@ fn random_in_unit_sphere(rng: &mut SmallRng) -> Vec3f {
 }
 
 impl Material {
+    #[inline]
     pub fn scatter(&self, ray_in: &Ray, hit_point: Vec3f, hit_normal: Vec3f, rng: &mut SmallRng) -> Option<ScatterRay> {
         match self {
             &Material::Lambertian {albedo } => return Material::scatter_lambertian(hit_point, hit_normal, albedo, rng),
