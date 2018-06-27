@@ -3,12 +3,11 @@ use math::*;
 
 
 pub struct HitRecord {
-    pub t: f32,
-    pub p: Vec3f,
-    pub normal: Vec3f,
-    pub material: Material,
+    pub object: Sphere,
+    pub ray_param: f32,
 }
 
+#[derive(Copy, Clone)]
 pub struct Sphere {
     pub center: Vec3f,
     pub radius: f32,
@@ -26,15 +25,11 @@ impl Sphere {
         if discriminant > 0.0 {
             let temp = (-b - discriminant.sqrt()) / a;
             if temp < t_max && temp > t_min {
-                let point = ray.point_at_time(temp);
-                let normal = (point - self.center) / self.radius;
-                return Some(HitRecord{t : temp, p: point, normal: normal, material: self.material});
+                return Some(HitRecord{object: *self, ray_param: temp});
             }
             let temp = (-b + discriminant.sqrt()) / a;
             if temp < t_max && temp > t_min {
-                let point = ray.point_at_time(temp);
-                let normal = (point - self.center) / self.radius;
-                return Some(HitRecord{t: temp, p: point, normal: normal, material: self.material});
+                return Some(HitRecord{object: *self, ray_param: temp});
             }
         }
         None
