@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use std::f32;
 
-use hitable::{Sphere, HitRecord};
+use hitable::{Sphere};
 use math::*;
 use material::{Material, ScatterRay};
 
@@ -66,20 +66,20 @@ impl Scene {
 
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, rng: &mut SmallRng) -> Option<ScatterRay> {
         let mut closest_so_far = t_max;
-        let mut hit_rec: Option<HitRecord> = None;
+        let mut hit_object: Option<&Sphere> = None;
 
         for object in &self.objects {
-            if let Some(record) = object.hit(ray, t_min, closest_so_far) {
-                closest_so_far = record.ray_param;
-                hit_rec = Some(record);
+            if let Some(ray_param) = object.hit(ray, t_min, closest_so_far) {
+                closest_so_far = ray_param;
+                hit_object = Some(object);
             }
         }
 
-        if let Some(record) = hit_rec {
-            let point = ray.point_at_time(record.ray_param);
-            let normal = (point - record.object.center) / record.object.radius;
+        if let Some(&object) = hit_object {
+            let point = ray.point_at_time(closest_so_far);
+            let normal = (point - object.center) / object.radius;
 
-            return record.object.material.scatter(&ray, point, normal, rng);
+            return object.material.scatter(&ray, point, normal, rng);
         }
         
         None
