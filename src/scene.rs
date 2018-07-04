@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use std::f32;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use hitable::{Sphere};
 use math::*;
@@ -8,13 +9,13 @@ use material::{Material, ScatterRay};
 
 pub struct Scene {
     objects: Vec<Sphere>,
-    pub ray_count: u32,
+    pub ray_count: AtomicUsize,
 }
 
 impl Scene {
     pub fn generate(rng: &mut SmallRng) -> Scene {
         let n = 500;
-        let mut scene = Scene { objects: Vec::with_capacity(n), ray_count: 0 };
+        let mut scene = Scene { objects: Vec::with_capacity(n), ray_count: AtomicUsize::new(0) };
         scene.objects.push(Sphere{center: vec3f(0.0, -1000.0, 0.0), radius: 1000.0, material: Material::Lambertian{albedo: vec3f(0.5, 0.5, 0.5)}});
 
         for a in -11..11 {
@@ -48,8 +49,12 @@ impl Scene {
         return scene;
     }
 
-    pub fn ray_trace(&mut self, ray: &Ray, depth: i32, rng: &mut SmallRng) -> Vec3f {
-        self.ray_count += 1;
+    pub fn get_ray_count(&self) -> usize {
+        self.ray_count.load(Ordering::Relaxed)
+    }
+
+    pub fn ray_trace(&self, ray: &Ray, depth: i32, rng: &mut SmallRng) -> Vec3f {
+        self.ray_count.fetch_add(1, Ordering::Relaxed);
 
         if depth >= 50 {
             return Vec3f::zero();
